@@ -1,6 +1,6 @@
 # PowerBI - IBM Datahack
 
-# *2. Tractchun*
+# *2. RRHH*
 
 Este proyecto es una práctica aplicable a un entorno de negocios real. 
 
