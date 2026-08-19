@@ -440,19 +440,25 @@
             filter: brightness(0.92) saturate(1.05);
         }
         
-        /* Ticket de impresión */
+        /* Ticket e impresión de reportes */
         @media print {
             body * {
                 visibility: hidden;
             }
-            #ticket-modal, #ticket-modal * {
+            #ticket-modal, #ticket-modal *,
+            #report-print-area, #report-print-area * {
                 visibility: visible;
             }
-            #ticket-modal {
+            #ticket-modal,
+            #report-print-area {
                 position: absolute;
                 left: 0;
                 top: 0;
                 width: 100%;
+            }
+            #report-print-area {
+                background: #ffffff !important;
+                box-shadow: none !important;
             }
         }
         
@@ -1087,34 +1093,63 @@
                     <div class="card rounded-2xl p-6 mb-6">
                         <div class="flex flex-wrap items-end gap-3">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Mes</label>
-                                <select id="sales-month" class="border border-gray-300 rounded-lg px-3 py-2">
-                                    <option value="01">Enero</option>
-                                    <option value="02">Febrero</option>
-                                    <option value="03">Marzo</option>
-                                    <option value="04">Abril</option>
-                                    <option value="05">Mayo</option>
-                                    <option value="06">Junio</option>
-                                    <option value="07">Julio</option>
-                                    <option value="08">Agosto</option>
-                                    <option value="09">Septiembre</option>
-                                    <option value="10">Octubre</option>
-                                    <option value="11">Noviembre</option>
-                                    <option value="12">Diciembre</option>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Período</label>
+                                <select id="sales-period" class="border border-gray-300 rounded-lg px-3 py-2">
+                                    <option value="today">Hoy</option>
+                                    <option value="week" selected>Últimos 7 días</option>
+                                    <option value="range">Rango de fechas</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Año</label>
-                                <select id="sales-year" class="border border-gray-300 rounded-lg px-3 py-2">
-                                    <option value="2025">2025</option>
-                                    <option value="2026">2026</option>
-                                </select>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Desde</label>
+                                <input type="date" id="sales-start-date" class="border border-gray-300 rounded-lg px-3 py-2">
                             </div>
-                            <button id="export-sales-btn" class="btn-primary text-white px-4 py-2 rounded-lg"><i class="fas fa-file-excel mr-2"></i>Exportar Excel</button>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Hasta</label>
+                                <input type="date" id="sales-end-date" class="border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                            <button type="button" id="sales-filter-btn" class="btn-secondary text-gray-700 px-4 py-2 rounded-lg">Filtrar</button>
+                            <button type="button" id="export-sales-btn" class="btn-primary text-white px-4 py-2 rounded-lg"><i class="fas fa-file-excel mr-2"></i>Exportar Excel</button>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Productos</label>
+                            <div id="sales-product-filters" class="flex flex-wrap gap-3"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="card rounded-2xl p-4">
+                            <p class="text-sm text-gray-500">Ventas encontradas</p>
+                            <p class="text-2xl font-bold text-primary" id="sales-summary-count">0</p>
+                        </div>
+                        <div class="card rounded-2xl p-4">
+                            <p class="text-sm text-gray-500">Unidades vendidas</p>
+                            <p class="text-2xl font-bold text-primary" id="sales-summary-units">0</p>
+                        </div>
+                        <div class="card rounded-2xl p-4">
+                            <p class="text-sm text-gray-500">Monto total</p>
+                            <p class="text-2xl font-bold text-primary" id="sales-summary-total">Gs 0</p>
                         </div>
                     </div>
 
                     <div class="card rounded-2xl p-6">
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+                            <div class="flex items-center gap-2 text-sm text-gray-500">
+                                <span>Mostrar</span>
+                                <select id="sales-page-size" data-system-page-size class="border border-gray-300 rounded-lg px-2 py-1 text-sm">
+                                    <option value="10" selected>10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span>registros</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm text-gray-500" id="sales-page-info"></span>
+                                <button type="button" id="sales-prev-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-left"></i></button>
+                                <button type="button" id="sales-next-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
                         <div class="overflow-x-auto">
                             <table class="w-full" id="sales-table">
                                 <thead id="sales-table-head"></thead>
@@ -1365,6 +1400,23 @@
                     </div>
 
                     <div class="card rounded-2xl p-6">
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+                            <div class="flex items-center gap-2 text-sm text-gray-500">
+                                <span>Mostrar</span>
+                                <select id="purchases-page-size" data-system-page-size class="border border-gray-300 rounded-lg px-2 py-1 text-sm">
+                                    <option value="10" selected>10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span>registros</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm text-gray-500" id="purchases-page-info"></span>
+                                <button type="button" id="purchases-prev-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-left"></i></button>
+                                <button type="button" id="purchases-next-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
                         <div class="overflow-x-auto">
                             <table class="w-full" id="purchases-table">
                                 <thead>
@@ -1399,6 +1451,23 @@
                     </div>
 
                     <div class="card rounded-2xl p-6">
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+                            <div class="flex items-center gap-2 text-sm text-gray-500">
+                                <span>Mostrar</span>
+                                <select id="suppliers-page-size" data-system-page-size class="border border-gray-300 rounded-lg px-2 py-1 text-sm">
+                                    <option value="10" selected>10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span>registros</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm text-gray-500" id="suppliers-page-info"></span>
+                                <button type="button" id="suppliers-prev-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-left"></i></button>
+                                <button type="button" id="suppliers-next-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
                         <div class="overflow-x-auto">
                             <table class="w-full" id="suppliers-table">
                                 <thead>
@@ -1424,9 +1493,9 @@
                     <!-- Filtros -->
                     <div class="card rounded-2xl p-6 mb-6">
                         <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
-                            <div>
+                            <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Reporte</label>
-                                <select id="report-type" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                <select id="report-type" class="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm appearance-none">
                                     <option value="daily-sales">Reporte Diario de Ventas</option>
                                     <option value="monthly-sales">Reporte Mensual de Ventas</option>
                                     <option value="annual-sales">Reporte Anual de Ventas</option>
@@ -1459,19 +1528,75 @@
                             </div>
                             
                             <div class="flex items-end">
-                                <button id="generate-report-btn" class="btn-primary text-white px-6 py-2 rounded-lg w-full">
+                                <button type="button" id="generate-report-btn" class="btn-primary text-white px-6 py-2 rounded-lg w-full">
                                     <i class="fas fa-chart-bar mr-2"></i>Generar
                                 </button>
                             </div>
 
                             <div class="flex items-end">
-                                <button id="print-report-btn" class="btn-secondary text-gray-700 px-6 py-2 rounded-lg w-full">
+                                <button type="button" id="print-report-btn" class="btn-secondary text-gray-700 px-6 py-2 rounded-lg w-full">
                                     <i class="fas fa-print mr-2"></i>Imprimir
+                                </button>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Mostrar</label>
+                                <select id="reports-page-size" data-system-page-size class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                    <option value="10" selected>10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mt-4">
+                            <div class="flex items-end md:col-start-6">
+                                <button type="button" id="export-report-btn" class="btn-primary text-white px-6 py-2 rounded-lg w-full">
+                                    <i class="fas fa-file-excel mr-2"></i>Exportar Excel
                                 </button>
                             </div>
                         </div>
                     </div>
-
+                    <!-- Resultados del reporte -->
+                    <div id="report-results" class="hidden">
+                        <div id="report-print-area" class="card rounded-2xl p-6 mb-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800" id="report-title">Reporte</h3>
+                            </div>
+                            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-sm text-gray-500" id="reports-page-info"></span>
+                                    <button type="button" id="reports-prev-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-left"></i></button>
+                                    <button type="button" id="reports-next-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="report-content">
+                                <div>
+                                    <div class="h-80">
+                                        <canvas id="report-chart"></canvas>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full" id="report-table">
+                                            <thead>
+                                                <tr class="border-b border-gray-200">
+                                                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Concepto</th>
+                                                    <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">Valor</th>
+                                                    <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">Porcentaje</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="report-table-body">
+                                                <!-- Datos dinámicos -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="card rounded-2xl p-6 mb-6">
                         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
                             <div>
@@ -1512,44 +1637,6 @@
                             </table>
                         </div>
                     </div>
-                    
-                    <!-- Resultados del reporte -->
-                    <div id="report-results" class="hidden">
-                        <div class="card rounded-2xl p-6 mb-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold text-gray-800" id="report-title">Reporte</h3>
-                                
-                                <button id="export-report-btn" class="btn-primary text-white px-4 py-2 rounded-lg">
-                                    <i class="fas fa-file-excel mr-2"></i>Exportar Excel
-                                </button>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="report-content">
-                                <div>
-                                    <div class="h-80">
-                                        <canvas id="report-chart"></canvas>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <div class="overflow-x-auto">
-                                        <table class="w-full" id="report-table">
-                                            <thead>
-                                                <tr class="border-b border-gray-200">
-                                                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Concepto</th>
-                                                    <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">Valor</th>
-                                                    <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">Porcentaje</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="report-table-body">
-                                                <!-- Datos dinámicos -->
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- ============================================ -->
@@ -1578,6 +1665,24 @@
                                 <button id="audit-export-btn" class="btn-primary text-white px-4 py-2 rounded-lg">
                                     <i class="fas fa-file-excel mr-2"></i>Exportar
                                 </button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+                            <div class="flex items-center gap-2 text-sm text-gray-500">
+                                <span>Mostrar</span>
+                                <select id="audit-page-size" data-system-page-size class="border border-gray-300 rounded-lg px-2 py-1 text-sm">
+                                    <option value="10" selected>10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span>registros</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm text-gray-500" id="audit-page-info"></span>
+                                <button type="button" id="audit-prev-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-left"></i></button>
+                                <button type="button" id="audit-next-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-right"></i></button>
                             </div>
                         </div>
                         
@@ -1612,6 +1717,24 @@
                             <button id="add-user-btn" class="btn-success text-white px-4 py-2 rounded-lg">
                                 <i class="fas fa-plus mr-2"></i>Nuevo Usuario
                             </button>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+                            <div class="flex items-center gap-2 text-sm text-gray-500">
+                                <span>Mostrar</span>
+                                <select id="users-page-size" data-system-page-size class="border border-gray-300 rounded-lg px-2 py-1 text-sm">
+                                    <option value="10" selected>10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span>registros</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm text-gray-500" id="users-page-info"></span>
+                                <button type="button" id="users-prev-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-left"></i></button>
+                                <button type="button" id="users-next-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-right"></i></button>
+                            </div>
                         </div>
                         
                         <div class="overflow-x-auto">
@@ -1901,29 +2024,29 @@
                             <div><label class="block text-xs font-medium text-gray-500 mb-1">Tipo Puesto</label><select id="rrhh-filter-tipo-puesto" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"><option value="">Todos los tipos</option></select></div>
                         </div>
 
-                        <div class="overflow-x-auto mb-4">
-                            <table class="w-full data-table" id="rrhh-data-table">
-                                <thead id="rrhh-table-head"></thead>
-                                <tbody id="rrhh-table-body"></tbody>
-                            </table>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-200">
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
                             <div class="flex items-center gap-2 text-sm text-gray-500">
                                 <span>Mostrar</span>
-                                <select id="rrhh-page-size" class="border border-gray-300 rounded-lg px-2 py-1 text-sm">
+                                <select id="rrhh-page-size" data-system-page-size class="border border-gray-300 rounded-lg px-2 py-1 text-sm">
+                                    <option value="10" selected>10</option>
+                                    <option value="25">25</option>
                                     <option value="50">50</option>
-                                    <option value="100" selected>100</option>
-                                    <option value="250">250</option>
-                                    <option value="500">500</option>
+                                    <option value="100">100</option>
                                 </select>
                                 <span>registros</span>
                             </div>
                             <div class="flex items-center gap-3">
                                 <span class="text-sm text-gray-500" id="rrhh-page-info"></span>
-                                <button id="rrhh-prev-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-left"></i></button>
-                                <button id="rrhh-next-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-right"></i></button>
+                                <button type="button" id="rrhh-prev-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-left"></i></button>
+                                <button type="button" id="rrhh-next-page" class="btn-secondary px-3 py-1 rounded-lg text-sm"><i class="fas fa-chevron-right"></i></button>
                             </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full data-table" id="rrhh-data-table">
+                                <thead id="rrhh-table-head"></thead>
+                                <tbody id="rrhh-table-body"></tbody>
+                            </table>
                         </div>
                     </div>
 
@@ -1979,6 +2102,8 @@
                 seller: { name: 'Vendedor', permissions: ['pos', 'view_sales'] }
             },
             LOW_STOCK_THRESHOLD: 50
+            ,
+            TIMEZONE: 'America/Asuncion'
         };
 
         // ============================================
@@ -2001,6 +2126,18 @@
         let currentSection = 'login';
         let charts = {};
         let isDarkMode = false;
+        let systemPageSize = 10;
+        let filteredSalesView = [];
+        let currentReportData = null;
+        const pagerState = {
+            sales: { page: 1 },
+            purchases: { page: 1 },
+            suppliers: { page: 1 },
+            audit: { page: 1 },
+            users: { page: 1 },
+            reports: { page: 1 }
+        };
+        window.systemPageSize = systemPageSize;
 
         // ============================================
         // DATOS DE DEMO
@@ -2061,7 +2198,8 @@
 
         function buildHistoricalDemoData() {
             const startDate = new Date('2025-12-01T00:00:00');
-            const endDate = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+            const now = getNowInTimeZone();
+            const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const activeSellers = usersData.filter(user => user.role === 'seller' && user.active);
             const sales = [];
             const documentCounters = {};
@@ -2297,17 +2435,56 @@
         }
 
         function formatDate(dateStr) {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            if (!dateStr) return '';
+            const tz = CONFIG.TIMEZONE || Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const [y, m, d] = dateStr.split('-').map(Number);
+            // Use midday UTC to avoid timezone shifts that move the date to the previous/next day
+            const dt = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+            try {
+                return new Intl.DateTimeFormat('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: tz }).format(dt);
+            } catch (e) {
+                return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
+            }
         }
 
         function formatDateTime(timestamp) {
-            const date = new Date(timestamp);
-            return date.toLocaleString('es-PE');
+            if (!timestamp) return '';
+            const tz = CONFIG.TIMEZONE || Intl.DateTimeFormat().resolvedOptions().timeZone;
+            try {
+                const dt = new Date(timestamp);
+                return new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium', timeStyle: 'short', timeZone: tz }).format(dt);
+            } catch (e) {
+                return String(timestamp);
+            }
+        }
+
+        function getNowInTimeZone() {
+            const tz = CONFIG.TIMEZONE || Intl.DateTimeFormat().resolvedOptions().timeZone;
+            // Try to create a Date representing the current time in the target timezone
+            try {
+                const local = new Date();
+                const parts = local.toLocaleString('en-US', { timeZone: tz }).replace(/,/g, '');
+                // Some environments return like "MM/DD/YYYY HH:MM:SS AM/PM" - let Date parse it
+                const parsed = new Date(parts);
+                if (!isNaN(parsed.getTime())) return parsed;
+            } catch (e) {
+                // fallthrough to next strategy
+            }
+
+            // Fallback: compute by using UTC time plus offset in hours (Paraguay usually UTC-4)
+            try {
+                const now = new Date();
+                // Default offset for America/Asuncion is -4 hours (may change with DST); use -4 as safe fallback
+                const offsetHours = -4;
+                const tzTime = new Date(now.getTime() + offsetHours * 60 * 60 * 1000);
+                return tzTime;
+            } catch (e) {
+                return new Date();
+            }
         }
 
         function getCurrentDate() {
-            return toISODate(new Date());
+            return toISODate(getNowInTimeZone());
         }
 
         function generateId() {
@@ -2315,7 +2492,77 @@
         }
 
         function toISODate(dateObj) {
-            return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+            const tz = CONFIG.TIMEZONE || Intl.DateTimeFormat().resolvedOptions().timeZone;
+            try {
+                // Use en-CA to get ISO-like format YYYY-MM-DD
+                return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(dateObj);
+            } catch (e) {
+                return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+            }
+        }
+
+        function getSystemPageSize() {
+            const allowed = [10, 25, 50, 100];
+            const size = Number(systemPageSize) || 10;
+            return allowed.includes(size) ? size : 10;
+        }
+
+        function setSystemPageSize(size) {
+            const parsed = Number(size) || 10;
+            systemPageSize = [10, 25, 50, 100].includes(parsed) ? parsed : 10;
+            window.systemPageSize = systemPageSize;
+            document.querySelectorAll('[data-system-page-size]').forEach(el => {
+                el.value = String(systemPageSize);
+            });
+            if (window.IceStockRRHH && typeof window.IceStockRRHH.setPageSize === 'function') {
+                window.IceStockRRHH.setPageSize(systemPageSize, true);
+            }
+        }
+
+        function paginateCollection(rows, key) {
+            if (!pagerState[key]) pagerState[key] = { page: 1 };
+            const pageSize = getSystemPageSize();
+            const total = Array.isArray(rows) ? rows.length : 0;
+            const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
+            if (pagerState[key].page > totalPages) pagerState[key].page = totalPages;
+            if (pagerState[key].page < 1) pagerState[key].page = 1;
+            const start = (pagerState[key].page - 1) * pageSize;
+            const pageRows = total ? rows.slice(start, start + pageSize) : [];
+            const info = document.getElementById(`${key}-page-info`);
+            const prev = document.getElementById(`${key}-prev-page`);
+            const next = document.getElementById(`${key}-next-page`);
+            if (info) {
+                info.textContent = total === 0
+                    ? '0 registros'
+                    : `${start + 1}-${Math.min(start + pageSize, total)} de ${total}`;
+            }
+            if (prev) prev.disabled = pagerState[key].page <= 1;
+            if (next) next.disabled = pagerState[key].page >= totalPages;
+            const sizeEl = document.getElementById(`${key}-page-size`);
+            if (sizeEl) sizeEl.value = String(pageSize);
+            return pageRows;
+        }
+
+        function bindPagerControls(key, reloadFn) {
+            const sizeEl = document.getElementById(`${key}-page-size`);
+            const prev = document.getElementById(`${key}-prev-page`);
+            const next = document.getElementById(`${key}-next-page`);
+            if (sizeEl) {
+                sizeEl.value = String(getSystemPageSize());
+                sizeEl.onchange = () => {
+                    setSystemPageSize(sizeEl.value);
+                    pagerState[key].page = 1;
+                    reloadFn();
+                };
+            }
+            if (prev) prev.onclick = () => {
+                pagerState[key].page -= 1;
+                reloadFn();
+            };
+            if (next) next.onclick = () => {
+                pagerState[key].page += 1;
+                reloadFn();
+            };
         }
 
         function seededHash(seed) {
@@ -3197,7 +3444,7 @@
             const currentMonth = today.substring(0, 7);
             const visibleSales = getVisibleSalesData();
 
-            const yesterdayDate = new Date();
+            const yesterdayDate = getNowInTimeZone();
             yesterdayDate.setDate(yesterdayDate.getDate() - 1);
             const yesterday = toISODate(yesterdayDate);
 
@@ -3226,7 +3473,7 @@
             document.getElementById('kpi-today-trend').innerHTML = `<i class="fas fa-arrow-${dailyTrend >= 0 ? 'up' : 'down'} mr-1"></i>${Math.abs(dailyTrend).toFixed(1)}%`;
             document.getElementById('kpi-today-trend').className = dailyTrend >= 0 ? 'text-green-600' : 'text-red-600';
 
-            const lastMonthDate = new Date();
+            const lastMonthDate = getNowInTimeZone();
             lastMonthDate.setMonth(lastMonthDate.getMonth() - 1);
             const previousMonth = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
             const previousMonthTotal = visibleSales
@@ -3251,7 +3498,7 @@
             
             tbody.innerHTML = recentSales.map(sale => `
                 <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="py-3 px-4">${formatDate(sale.date)} ${sale.time}</td>
+                    <td class="py-3 px-4">${(function(){ const doc = getSaleDocumentInfo(sale); const issued = (doc.issuedAt||`${sale.date}T${sale.time}:00`); return formatDate(issued.substring(0,10)) + ' ' + issued.substring(11,16); })()}</td>
                     <td class="py-3 px-4">${getSaleProductSummary(sale) || 'Sin detalle'}</td>
                     <td class="py-3 px-4">${getTotalUnitsFromSale(sale)} unidades</td>
                     <td class="py-3 px-4 font-semibold text-primary">${formatCurrency(sale.total)}</td>
@@ -3296,9 +3543,10 @@
             const visibleSales = getVisibleSalesData();
             const productPeriod = document.getElementById('chart-product-period')?.value || 'month';
             const trendPeriod = parseInt(document.getElementById('chart-trend-period')?.value || '7', 10);
-            const now = new Date();
+            const now = getNowInTimeZone();
             const productRangeStart = new Date(now.getFullYear(), now.getMonth() - (productPeriod === 'year' ? 11 : productPeriod === 'quarter' ? 2 : 0), 1);
-            const productSales = visibleSales.filter(sale => new Date(`${sale.date}T00:00:00`) >= productRangeStart);
+            const productRangeStartISO = toISODate(productRangeStart);
+            const productSales = visibleSales.filter(sale => sale.date >= productRangeStartISO);
 
             // Gráfico de productos
             const productsCtx = document.getElementById('products-chart')?.getContext('2d');
@@ -3336,10 +3584,14 @@
                 const salesByDay = [];
                 
                 for (let i = trendPeriod - 1; i >= 0; i--) {
-                    const date = new Date();
+                    const date = getNowInTimeZone();
                     date.setDate(date.getDate() - i);
                     const dateStr = toISODate(date);
-                    trendLabels.push(date.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' }));
+                    try {
+                        trendLabels.push(new Intl.DateTimeFormat('es-PE', { day: '2-digit', month: '2-digit', timeZone: CONFIG.TIMEZONE }).format(date));
+                    } catch (e) {
+                        trendLabels.push(date.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' }));
+                    }
                     
                     const daySales = visibleSales.filter(s => s.date === dateStr);
                     const dayTotal = daySales.reduce((sum, s) => sum + s.total, 0);
@@ -3587,9 +3839,14 @@
                 return;
             }
 
-            const now = new Date();
+            const now = getNowInTimeZone();
             const saleDate = toISODate(now);
-            const saleTime = now.toTimeString().slice(0, 5);
+            let saleTime = '';
+            try {
+                saleTime = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: CONFIG.TIMEZONE }).format(now);
+            } catch (e) {
+                saleTime = now.toTimeString().slice(0, 5);
+            }
 
             // Crear venta
             const sale = {
@@ -3648,183 +3905,205 @@
             renderProducts();
             refreshCoreViews();
 
+            // Asegurar que tablas relacionadas se actualicen inmediatamente
+            try {
+                if (typeof loadSalesTable === 'function') loadSalesTable();
+                if (typeof renderDocumentHistorySummary === 'function') renderDocumentHistorySummary();
+                if (typeof renderReportTable === 'function') renderReportTable();
+            } catch (err) {
+                console.error('Error actualizando vistas tras venta:', err);
+            }
+
             if (result.isConfirmed) {
                 openPrintableSaleDocument(sale);
             }
         }
 
         // ============================================
-        // VENTAS (REGISTRO MENSUAL)
+        // VENTAS (REGISTRO)
         // ============================================
-        let salesTable = null;
+        function applySalesPeriodDates() {
+            const period = document.getElementById('sales-period')?.value || 'week';
+            const startInput = document.getElementById('sales-start-date');
+            const endInput = document.getElementById('sales-end-date');
+            if (!startInput || !endInput) return;
+            if (period === 'range') return;
+            const range = getRangeByPeriod(period);
+            startInput.value = range.start;
+            endInput.value = range.end;
+        }
+
+        function renderSalesProductFilters() {
+            const container = document.getElementById('sales-product-filters');
+            if (!container || container.dataset.ready === 'true') return;
+            container.innerHTML = CONFIG.PRODUCTS.map(product => `
+                <label class="inline-flex items-center gap-2 text-sm text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-2">
+                    <input type="checkbox" class="sales-product-filter" value="${product.id}" checked>
+                    <span>${product.name}</span>
+                </label>
+            `).join('');
+            container.dataset.ready = 'true';
+            container.querySelectorAll('.sales-product-filter').forEach(input => {
+                input.onchange = () => {
+                    pagerState.sales.page = 1;
+                    loadSalesTable();
+                };
+            });
+        }
+
+        function getSelectedSalesProducts() {
+            const checked = Array.from(document.querySelectorAll('.sales-product-filter:checked')).map(input => input.value);
+            return checked.length ? checked : CONFIG.PRODUCTS.map(product => product.id);
+        }
+
+        function getSaleUnitsForProducts(sale, productIds) {
+            return productIds.reduce((sum, productId) => sum + (Number(sale.products?.[productId]) || 0), 0);
+        }
+
+        function getSaleSummaryForProducts(sale, productIds) {
+            return CONFIG.PRODUCTS
+                .filter(product => productIds.includes(product.id))
+                .map(product => ({
+                    name: product.name,
+                    quantity: sale.products?.[product.id] || 0
+                }))
+                .filter(item => item.quantity > 0)
+                .map(item => `${item.name}: ${item.quantity}`)
+                .join(' | ') || 'Sin productos seleccionados';
+        }
+
+        function getFilteredSalesRecords() {
+            const startDate = document.getElementById('sales-start-date')?.value || '';
+            const endDate = document.getElementById('sales-end-date')?.value || '';
+            const productIds = getSelectedSalesProducts();
+            return getVisibleSalesData()
+                .filter(sale => {
+                    const inRange = (!startDate || sale.date >= startDate) && (!endDate || sale.date <= endDate);
+                    return inRange && getSaleUnitsForProducts(sale, productIds) > 0;
+                })
+                .sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`));
+        }
 
         function initSales() {
-            // Configurar filtros
-            const monthSelect = document.getElementById('sales-month');
-            const yearSelect = document.getElementById('sales-year');
-            
-            if (monthSelect && yearSelect) {
-                // Mes actual
-                const currentMonth = new Date().getMonth() + 1;
-                monthSelect.value = String(currentMonth).padStart(2, '0');
-                
-                // Año actual
-                yearSelect.value = String(new Date().getFullYear());
-                
-                monthSelect.addEventListener('change', loadSalesTable);
-                yearSelect.addEventListener('change', loadSalesTable);
+            renderSalesProductFilters();
+            applySalesPeriodDates();
+            bindPagerControls('sales', loadSalesTable);
+
+            const periodSelect = document.getElementById('sales-period');
+            if (periodSelect) {
+                periodSelect.onchange = () => {
+                    applySalesPeriodDates();
+                    pagerState.sales.page = 1;
+                    loadSalesTable();
+                };
             }
 
-            // Botón exportar
-            document.getElementById('export-sales-btn')?.addEventListener('click', exportSalesToExcel);
-
-            // Formulario de edición
-            document.getElementById('edit-sale-form')?.addEventListener('submit', updateSale);
+            document.getElementById('sales-start-date').onchange = () => {
+                document.getElementById('sales-period').value = 'range';
+                pagerState.sales.page = 1;
+                loadSalesTable();
+            };
+            document.getElementById('sales-end-date').onchange = () => {
+                document.getElementById('sales-period').value = 'range';
+                pagerState.sales.page = 1;
+                loadSalesTable();
+            };
+            document.getElementById('sales-filter-btn').onclick = () => {
+                pagerState.sales.page = 1;
+                loadSalesTable();
+            };
+            document.getElementById('export-sales-btn').onclick = exportSalesToExcel;
 
             loadSalesTable();
         }
 
         function loadSalesTable() {
-            const month = document.getElementById('sales-month')?.value || '01';
-            const year = document.getElementById('sales-year')?.value || '2026';
-            const period = `${year}-${month}`;
-
-            // Filtrar ventas del período
-            const filteredSales = getVisibleSalesData().filter(s => s.date.startsWith(period));
-
-            // Agrupar por día
-            const salesByDay = {};
-            const daysInMonth = new Date(year, month, 0).getDate();
-            
-            for (let day = 1; day <= daysInMonth; day++) {
-                salesByDay[day] = {
-                    day: day,
-                    products: createEmptyProductMap(),
-                    total: 0,
-                    sales: []
-                };
-            }
-
-            filteredSales.forEach(sale => {
-                const day = parseInt(sale.date.split('-')[2]);
-                CONFIG.PRODUCTS.forEach(product => {
-                    salesByDay[day].products[product.id] += sale.products?.[product.id] || 0;
-                });
-                salesByDay[day].total += sale.total;
-                salesByDay[day].sales.push(sale);
-            });
-
-            // Destruir tabla anterior si existe
-            if (salesTable) {
-                salesTable.destroy();
-            }
-
+            const productIds = getSelectedSalesProducts();
+            const tbody = document.getElementById('sales-table-body');
             const head = document.getElementById('sales-table-head');
             const foot = document.getElementById('sales-table-foot');
-
-            // Crear tabla
-            const tbody = document.getElementById('sales-table-body');
             if (!tbody || !head || !foot) return;
+
+            filteredSalesView = getFilteredSalesRecords();
+            const pageRows = paginateCollection(filteredSalesView, 'sales');
+            const totalUnits = filteredSalesView.reduce((sum, sale) => sum + getSaleUnitsForProducts(sale, productIds), 0);
+            const totalAmount = filteredSalesView.reduce((sum, sale) => sum + sale.total, 0);
+
+            document.getElementById('sales-summary-count').textContent = filteredSalesView.length;
+            document.getElementById('sales-summary-units').textContent = totalUnits;
+            document.getElementById('sales-summary-total').textContent = formatCurrency(totalAmount);
 
             head.innerHTML = `
                 <tr class="border-b border-gray-200">
-                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Día</th>
-                    ${CONFIG.PRODUCTS.map(product => `<th class="text-left py-3 px-4 text-sm font-medium text-gray-500">${product.name}</th>`).join('')}
-                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Total</th>
-                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Acciones</th>
+                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Fecha / Hora</th>
+                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Comprobante</th>
+                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Detalle vendido</th>
+                    <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">Unidades</th>
+                    <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">Total</th>
+                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Vendedor</th>
+                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Pago</th>
+                    <th class="text-center py-3 px-4 text-sm font-medium text-gray-500">Acciones</th>
                 </tr>
             `;
 
-            tbody.innerHTML = Object.values(salesByDay).map(day => `
-                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="py-3 px-4 font-medium">${String(day.day).padStart(2, '0')}</td>
-                    ${CONFIG.PRODUCTS.map(product => `<td class="py-3 px-4">${day.products[product.id]}</td>`).join('')}
-                    <td class="py-3 px-4 font-semibold">${formatCurrency(day.total)}</td>
-                    <td class="py-3 px-4">
-                        ${day.sales.length > 0 ? `
-                            <button onclick="viewDaySales(${day.day}, '${period}')" class="text-primary hover:text-blue-700 mr-2" title="Ver detalle">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        ` : '-'}
-                    </td>
-                </tr>
-            `).join('');
-
-            // Calcular totales
-            const totals = Object.values(salesByDay).reduce((acc, day) => {
-                CONFIG.PRODUCTS.forEach(product => {
-                    acc.products[product.id] += day.products[product.id];
-                });
-                acc.total += day.total;
-                return acc;
-            }, { products: createEmptyProductMap(), total: 0 });
+            tbody.innerHTML = pageRows.length === 0
+                ? `<tr><td colspan="9" class="py-6 px-4 text-center text-gray-500">No hay ventas para los filtros seleccionados.</td></tr>`
+                : pageRows.map(sale => {
+                    const documentInfo = getSaleDocumentInfo(sale);
+                    return `
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-3 px-4">${(function(){ const issued = (documentInfo.issuedAt || `${sale.date}T${sale.time}:00`); return formatDate(issued.substring(0,10)) + ' ' + issued.substring(11,16); })()}</td>
+                            <td class="py-3 px-4">${documentInfo.label}<br><span class="text-xs text-gray-500">${documentInfo.number}</span></td>
+                            <td class="py-3 px-4">${getSaleSummaryForProducts(sale, productIds)}</td>
+                            <td class="py-3 px-4 text-right">${getSaleUnitsForProducts(sale, productIds)}</td>
+                            <td class="py-3 px-4 text-right font-semibold text-primary">${formatCurrency(sale.total)}</td>
+                            <td class="py-3 px-4">${sale.seller}</td>
+                            <td class="py-3 px-4">${getPaymentMethodLabel(sale.paymentMethod)}</td>
+                            <td class="py-3 px-4 text-center">
+                                <button type="button" onclick="viewSaleDetail('${sale.id}')" class="text-primary hover:text-blue-700" title="Ver detalle">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
 
             foot.innerHTML = `
                 <tr class="bg-gray-50 font-semibold">
-                    <td class="py-3 px-4 text-right">Totales</td>
-                    ${CONFIG.PRODUCTS.map(product => `<td class="py-3 px-4">${totals.products[product.id]}</td>`).join('')}
-                    <td class="py-3 px-4">${formatCurrency(totals.total)}</td>
-                    <td class="py-3 px-4"></td>
+                    <td colspan="3" class="py-3 px-4 text-right">Totales del filtro</td>
+                    <td class="py-3 px-4 text-right">${totalUnits}</td>
+                    <td class="py-3 px-4 text-right text-primary">${formatCurrency(totalAmount)}</td>
+                    <td colspan="3" class="py-3 px-4"></td>
                 </tr>
             `;
-
-            // Inicializar DataTable
-            salesTable = $('#sales-table').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
-                },
-                pageLength: 31,
-                ordering: false,
-                searching: false,
-                lengthChange: false
-            });
         }
 
-        function viewDaySales(day, period) {
-            const dateStr = `${period}-${String(day).padStart(2, '0')}`;
-            const daySales = getVisibleSalesData().filter(s => s.date === dateStr);
-            
+        function viewSaleDetail(saleId) {
+            const sale = getVisibleSalesData().find(item => item.id === saleId);
+            if (!sale) return;
+            const documentInfo = getSaleDocumentInfo(sale);
             Swal.fire({
-                title: `Ventas del ${formatDate(dateStr)}`,
+                title: `Venta ${documentInfo.number}`,
                 html: `
-                    <div class="text-left">
-                        ${daySales.map(sale => `
-                            ${(() => {
-                                const documentInfo = getSaleDocumentInfo(sale);
-                                return `
-                            <div class="border-b border-gray-200 py-2">
-                                <div class="flex justify-between">
-                                    <span class="font-semibold">${sale.time}</span>
-                                    <span class="text-primary font-bold">${formatCurrency(sale.total)}</span>
-                                </div>
-                                <div class="text-sm text-gray-600">
-                                    ${getSaleProductSummary(sale) || 'Sin productos'}
-                                </div>
-                                <div class="text-xs text-gray-500">
-                                    Vendedor: ${sale.seller} | 
-                                    Pago: ${getPaymentMethodLabel(sale.paymentMethod)}
-                                </div>
-                                <div class="text-xs text-gray-500">
-                                    ${documentInfo.label}: ${documentInfo.number} | Cliente: ${escapeHtml(documentInfo.customer.name)} | RUC: ${escapeHtml(documentInfo.customer.ruc)}
-                                </div>
-                            </div>
-                            `;
-                            })()}
-                        `).join('')}
+                    <div class="text-left space-y-2">
+                        <p><strong>Fecha:</strong> ${formatDate(sale.date)} ${sale.time}</p>
+                        <p><strong>Comprobante:</strong> ${documentInfo.label} ${documentInfo.number}</p>
+                        <p><strong>Cliente:</strong> ${escapeHtml(documentInfo.customer.name)} | RUC: ${escapeHtml(documentInfo.customer.ruc)}</p>
+                        <p><strong>Productos:</strong> ${getSaleProductSummary(sale) || 'Sin productos'}</p>
+                        <p><strong>Total:</strong> ${formatCurrency(sale.total)}</p>
+                        <p><strong>Vendedor:</strong> ${sale.seller}</p>
+                        <p><strong>Pago:</strong> ${getPaymentMethodLabel(sale.paymentMethod)}</p>
                     </div>
                 `,
-                width: 600,
+                width: 560,
                 confirmButtonText: 'Cerrar'
             });
         }
 
         function exportSalesToExcel() {
-            const month = document.getElementById('sales-month')?.value || '01';
-            const year = document.getElementById('sales-year')?.value || '2026';
-            const period = `${year}-${month}`;
-            
-            const filteredSales = getVisibleSalesData().filter(s => s.date.startsWith(period));
-            
+            const productIds = getSelectedSalesProducts();
+            const filteredSales = filteredSalesView.length ? filteredSalesView : getFilteredSalesRecords();
+
             if (filteredSales.length === 0) {
                 showNotification('No hay ventas para exportar', 'warning');
                 return;
@@ -3836,9 +4115,12 @@
                 Fecha: formatDate(sale.date),
                 Hora: sale.time,
                 ...CONFIG.PRODUCTS.reduce((acc, product) => {
-                    acc[product.name] = sale.products?.[product.id] || 0;
+                    if (productIds.includes(product.id)) {
+                        acc[product.name] = sale.products?.[product.id] || 0;
+                    }
                     return acc;
                 }, {}),
+                Unidades: getSaleUnitsForProducts(sale, productIds),
                 Total: sale.total,
                 Cliente: getSaleDocumentInfo(sale).customer.name,
                 RUC: getSaleDocumentInfo(sale).customer.ruc,
@@ -3850,11 +4132,11 @@
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Ventas');
-            
-            const monthName = new Date(`${year}-${month}-01`).toLocaleDateString('es-PE', { month: 'long' });
-            XLSX.writeFile(wb, `Ventas_${monthName}_${year}.xlsx`);
-            
-            logAudit('export_excel', `Exportación de ventas ${period}`);
+            const startDate = document.getElementById('sales-start-date')?.value || 'inicio';
+            const endDate = document.getElementById('sales-end-date')?.value || 'fin';
+            XLSX.writeFile(wb, `Ventas_${startDate}_${endDate}.xlsx`);
+
+            logAudit('export_excel', `Exportación de ventas ${startDate} a ${endDate}`);
             showNotification('Archivo exportado correctamente', 'success');
         }
 
@@ -3961,7 +4243,7 @@
                 stockData[productId].current += amount;
                 stockMovementsData.unshift({
                     id: generateId(),
-                    timestamp: `${getCurrentDate()}T${new Date().toTimeString().slice(0, 8)}`,
+                    timestamp: `${getCurrentDate()}T${getNowInTimeZone().toTimeString().slice(0, 8)}`,
                     type: 'Entrada',
                     productId,
                     product: product.name,
@@ -3980,7 +4262,7 @@
                 stockData[productId].current -= amount;
                 stockMovementsData.unshift({
                     id: generateId(),
-                    timestamp: `${getCurrentDate()}T${new Date().toTimeString().slice(0, 8)}`,
+                    timestamp: `${getCurrentDate()}T${getNowInTimeZone().toTimeString().slice(0, 8)}`,
                     type: 'Salida',
                     productId,
                     product: product.name,
@@ -4062,7 +4344,7 @@
 
             stockMovementsData.unshift({
                 id: generateId(),
-                timestamp: `${getCurrentDate()}T${new Date().toTimeString().slice(0, 8)}`,
+                timestamp: `${getCurrentDate()}T${getNowInTimeZone().toTimeString().slice(0, 8)}`,
                 type: 'Entrada',
                 productId,
                 product: name,
@@ -4146,7 +4428,7 @@
                     Precio: priceData[product.id].current,
                     Fecha: getCurrentDate()
                 }));
-                exportRowsToExcel(rows, `Precios_${toISODate(new Date())}.xlsx`, 'Precios');
+                exportRowsToExcel(rows, `Precios_${toISODate(getNowInTimeZone())}.xlsx`, 'Precios');
             });
         }
 
@@ -4258,14 +4540,15 @@
         let filteredSuppliersView = [];
 
         function getRangeByPeriod(period) {
-            const today = new Date();
+            const today = getNowInTimeZone();
             let start;
-            let end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-            if (period === 'week') {
-                const day = today.getDay();
-                const diffToMonday = (day + 6) % 7;
-                start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - diffToMonday);
+            if (period === 'today') {
+                start = new Date(end);
+            } else if (period === 'week') {
+                start = new Date(end);
+                start.setDate(start.getDate() - 6);
             } else {
                 start = new Date(today.getFullYear(), today.getMonth(), 1);
             }
@@ -4315,7 +4598,10 @@
                 }
             }
 
-            document.getElementById('purchase-filter-btn').onclick = loadPurchases;
+            document.getElementById('purchase-filter-btn').onclick = () => {
+                pagerState.purchases.page = 1;
+                loadPurchases();
+            };
             document.getElementById('purchase-export-btn').onclick = () => {
                 const rows = filteredPurchasesView.map(p => ({
                     Fecha: p.date,
@@ -4325,9 +4611,10 @@
                     Detalle: 'Compra de insumos de refrigeracion',
                     Total: Math.round(p.total)
                 }));
-                exportRowsToExcel(rows, `Compras_${toISODate(new Date())}.xlsx`, 'Compras');
+                exportRowsToExcel(rows, `Compras_${toISODate(getNowInTimeZone())}.xlsx`, 'Compras');
             };
 
+            bindPagerControls('purchases', loadPurchases);
             loadPurchases();
         }
 
@@ -4345,8 +4632,11 @@
             });
 
             const total = filteredPurchasesView.reduce((sum, p) => sum + p.total, 0);
+            const pageRows = paginateCollection(filteredPurchasesView, 'purchases');
 
-            tbody.innerHTML = filteredPurchasesView.map(p => `
+            tbody.innerHTML = (pageRows.length === 0
+                ? `<tr><td colspan="6" class="py-6 px-4 text-center text-gray-500">No hay compras para los filtros seleccionados.</td></tr>`
+                : pageRows.map(p => `
                 <tr class="border-b border-gray-100">
                     <td class="py-3 px-4">${formatDate(p.date)}</td>
                     <td class="py-3 px-4">${p.supplier}</td>
@@ -4355,7 +4645,7 @@
                     <td class="py-3 px-4 text-right">Insumos</td>
                     <td class="py-3 px-4 text-right font-semibold">${formatCurrency(p.total)}</td>
                 </tr>
-            `).join('') + `
+            `).join('')) + `
                 <tr class="bg-gray-50 font-semibold">
                     <td colspan="5" class="py-3 px-4 text-right">Total filtrado</td>
                     <td class="py-3 px-4 text-right text-primary">${formatCurrency(total)}</td>
@@ -4364,7 +4654,10 @@
         }
 
         function initSuppliers() {
-            document.getElementById('supplier-filter-btn').onclick = loadSuppliers;
+            document.getElementById('supplier-filter-btn').onclick = () => {
+                pagerState.suppliers.page = 1;
+                loadSuppliers();
+            };
             document.getElementById('supplier-export-btn').onclick = () => {
                 const rows = filteredSuppliersView.map(s => ({
                     Proveedor: s.name,
@@ -4375,8 +4668,9 @@
                     Compras: s.purchaseCount,
                     Monto_Total: Math.round(s.purchaseTotal)
                 }));
-                exportRowsToExcel(rows, `Proveedores_${toISODate(new Date())}.xlsx`, 'Proveedores');
+                exportRowsToExcel(rows, `Proveedores_${toISODate(getNowInTimeZone())}.xlsx`, 'Proveedores');
             };
+            bindPagerControls('suppliers', loadSuppliers);
             loadSuppliers();
         }
 
@@ -4399,7 +4693,11 @@
                 return s.name.toLowerCase().includes(query) || s.contact.toLowerCase().includes(query);
             });
 
-            tbody.innerHTML = filteredSuppliersView.map(s => `
+            const pageRows = paginateCollection(filteredSuppliersView, 'suppliers');
+
+            tbody.innerHTML = pageRows.length === 0
+                ? `<tr><td colspan="6" class="py-6 px-4 text-center text-gray-500">No hay proveedores para mostrar.</td></tr>`
+                : pageRows.map(s => `
                 <tr class="border-b border-gray-100">
                     <td class="py-3 px-4 font-medium">${s.name}</td>
                     <td class="py-3 px-4">${s.contact}</td>
@@ -4415,9 +4713,16 @@
         // AUDITORIA
         // ============================================
         function initAudit() {
-            document.getElementById('audit-action-filter').onchange = loadAudit;
-            document.getElementById('audit-date-filter').onchange = loadAudit;
+            document.getElementById('audit-action-filter').onchange = () => {
+                pagerState.audit.page = 1;
+                loadAudit();
+            };
+            document.getElementById('audit-date-filter').onchange = () => {
+                pagerState.audit.page = 1;
+                loadAudit();
+            };
             document.getElementById('audit-export-btn').onclick = exportAuditToExcel;
+            bindPagerControls('audit', loadAudit);
             loadAudit();
         }
 
@@ -4432,8 +4737,11 @@
                 const byDate = !dateFilter || log.timestamp.startsWith(dateFilter);
                 return byAction && byDate;
             });
+            const pageRows = paginateCollection(filtered, 'audit');
 
-            tbody.innerHTML = filtered.map(log => `
+            tbody.innerHTML = pageRows.length === 0
+                ? `<tr><td colspan="6" class="py-6 px-4 text-center text-gray-500">No hay registros de auditoría.</td></tr>`
+                : pageRows.map(log => `
                 <tr class="border-b border-gray-100">
                     <td class="py-3 px-4">${formatDateTime(log.timestamp)}</td>
                     <td class="py-3 px-4">${log.user}</td>
@@ -4460,7 +4768,7 @@
                     Accion: log.action,
                     Detalle: log.details || '-'
                 }));
-            exportRowsToExcel(rows, `Auditoria_${toISODate(new Date())}.xlsx`, 'Auditoria');
+            exportRowsToExcel(rows, `Auditoria_${toISODate(getNowInTimeZone())}.xlsx`, 'Auditoria');
         }
 
         // ============================================
@@ -4470,6 +4778,7 @@
             const period = document.getElementById('report-period');
             const startInput = document.getElementById('report-start-date');
             const endInput = document.getElementById('report-end-date');
+            const typeSelect = document.getElementById('report-type');
 
             if (period) {
                 period.onchange = () => {
@@ -4478,6 +4787,7 @@
                         startInput.value = range.start;
                         endInput.value = range.end;
                     }
+                    generateReport();
                 };
 
                 if (!startInput.value || !endInput.value) {
@@ -4487,10 +4797,22 @@
                 }
             }
 
+            if (typeSelect) {
+                typeSelect.onchange = () => {
+                    pagerState.reports.page = 1;
+                    generateReport();
+                };
+            }
+
+            if (startInput) startInput.onchange = generateReport;
+            if (endInput) endInput.onchange = generateReport;
+
             renderDocumentHistorySummary();
+            bindPagerControls('reports', renderReportTable);
             document.getElementById('generate-report-btn').onclick = generateReport;
             document.getElementById('export-report-btn').onclick = exportReportToExcel;
             document.getElementById('print-report-btn').onclick = printReport;
+            generateReport();
         }
 
         function renderDocumentHistorySummary() {
@@ -4540,7 +4862,7 @@
                 });
                 const labels = Object.keys(grouped).sort();
                 const values = labels.map(d => grouped[d]);
-                return { title: 'Reporte Diario de Ventas', labels, values, rows: summarizeToRows(labels, values), chartType: 'bar' };
+                return { title: 'Reporte Diario de Ventas', labels, values, rows: summarizeToRows(labels, values), chartType: 'bar', valueKind: 'money' };
             }
 
             if (type === 'monthly-sales') {
@@ -4551,7 +4873,7 @@
                 });
                 const labels = Object.keys(grouped).sort();
                 const values = labels.map(day => grouped[day]);
-                return { title: 'Reporte Mensual de Ventas', labels, values, rows: summarizeToRows(labels.map(day => `Dia ${day}`), values), chartType: 'line' };
+                return { title: 'Reporte Mensual de Ventas', labels, values, rows: summarizeToRows(labels.map(day => `Dia ${day}`), values), chartType: 'line', valueKind: 'money' };
             }
 
             if (type === 'annual-sales') {
@@ -4562,7 +4884,7 @@
                 });
                 const labels = Object.keys(grouped).sort();
                 const values = labels.map(month => grouped[month]);
-                return { title: 'Reporte Anual de Ventas', labels, values, rows: summarizeToRows(labels, values), chartType: 'line' };
+                return { title: 'Reporte Anual de Ventas', labels, values, rows: summarizeToRows(labels, values), chartType: 'line', valueKind: 'money' };
             }
 
             if (type === 'document-history') {
@@ -4578,7 +4900,8 @@
                     labels,
                     values,
                     rows: summarizeToRows(labels, values),
-                    chartType: 'bar'
+                    chartType: 'bar',
+                    valueKind: 'count'
                 };
             }
 
@@ -4589,7 +4912,7 @@
                 });
                 const labels = Object.keys(grouped);
                 const values = labels.map(k => grouped[k]);
-                return { title: 'Reporte por Vendedor', labels, values, rows: summarizeToRows(labels, values), chartType: 'bar' };
+                return { title: 'Reporte por Vendedor', labels, values, rows: summarizeToRows(labels, values), chartType: 'bar', valueKind: 'money' };
             }
 
             if (type === 'product-performance') {
@@ -4601,7 +4924,7 @@
                 });
                 const labels = CONFIG.PRODUCTS.map(product => product.name);
                 const values = CONFIG.PRODUCTS.map(product => totals[product.id]);
-                return { title: 'Reporte de Productos Más Vendidos', labels, values, rows: summarizeToRows(labels, values), chartType: 'doughnut' };
+                return { title: 'Reporte de Productos Más Vendidos', labels, values, rows: summarizeToRows(labels, values), chartType: 'doughnut', valueKind: 'count' };
             }
 
             if (type === 'payment-methods') {
@@ -4612,13 +4935,13 @@
                 });
                 const labels = Object.keys(grouped);
                 const values = labels.map(k => grouped[k]);
-                return { title: 'Reporte de Métodos de Pago', labels, values, rows: summarizeToRows(labels, values), chartType: 'pie' };
+                return { title: 'Reporte de Métodos de Pago', labels, values, rows: summarizeToRows(labels, values), chartType: 'pie', valueKind: 'money' };
             }
 
             if (type === 'inventory-status') {
                 const labels = CONFIG.PRODUCTS.map(p => p.name);
                 const values = CONFIG.PRODUCTS.map(p => stockData[p.id].current);
-                return { title: 'Reporte de Inventario / Kardex', labels, values, rows: summarizeToRows(labels, values), chartType: 'bar' };
+                return { title: 'Reporte de Inventario / Kardex', labels, values, rows: summarizeToRows(labels, values), chartType: 'bar', valueKind: 'count' };
             }
 
             if (type === 'losses') {
@@ -4637,13 +4960,22 @@
 
         function generateReport() {
             const type = document.getElementById('report-type').value;
-            const startDate = document.getElementById('report-start-date').value;
-            const endDate = document.getElementById('report-end-date').value;
+            const periodEl = document.getElementById('report-period');
+            const period = periodEl ? periodEl.value : 'range';
+            let startDate = document.getElementById('report-start-date').value;
+            let endDate = document.getElementById('report-end-date').value;
 
-            if (!startDate || !endDate) {
-                showNotification('Seleccione fechas válidas', 'error');
-                return;
+            // If user selected a predefined period or dates are missing, compute the range
+            if (period !== 'range' || !startDate || !endDate) {
+                const range = getRangeByPeriod(period);
+                startDate = range.start;
+                endDate = range.end;
+                const startInput = document.getElementById('report-start-date');
+                const endInput = document.getElementById('report-end-date');
+                if (startInput) startInput.value = startDate;
+                if (endInput) endInput.value = endDate;
             }
+
             if (startDate > endDate) {
                 showNotification('La fecha inicio no puede ser mayor a la fecha fin', 'error');
                 return;
@@ -4668,19 +5000,14 @@
             currentReportLabel = report.title;
             results.classList.remove('hidden');
 
-            tbody.innerHTML = report.rows.map(row => `
-                <tr class="border-b border-gray-100">
-                    <td class="py-3 px-4">${row.label}</td>
-                    <td class="py-3 px-4 text-right">${Number(row.value).toFixed(2)}</td>
-                    <td class="py-3 px-4 text-right">${row.percent.toFixed(2)}%</td>
-                </tr>
-            `).join('');
-
             reportRowsForExport = report.rows.map(row => ({
                 Concepto: row.label,
-                Valor: Number(row.value.toFixed(2)),
-                Porcentaje: `${row.percent.toFixed(2)}%`
+                Valor: Number((row.value || 0).toFixed(2)),
+                Porcentaje: `${((row.percent || 0)).toFixed ? (row.percent.toFixed(2) + '%') : (row.percent + '%')}`
             }));
+
+            // Render paginated table view
+            renderReportTable();
 
             const ctx = document.getElementById('report-chart');
             if (charts.report) {
@@ -4708,16 +5035,57 @@
             logAudit('report_generated', `${report.title} (${startDate} a ${endDate})`);
         }
 
+        function renderReportTable() {
+            const tbody = document.getElementById('report-table-body');
+            const results = document.getElementById('report-results');
+            if (!tbody || !results) return;
+
+            if (!reportRowsForExport || reportRowsForExport.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="py-6 px-4 text-center text-gray-500">Sin resultados</td></tr>';
+                results.classList.remove('hidden');
+                return;
+            }
+
+            const pageRows = paginateCollection(reportRowsForExport, 'reports');
+            tbody.innerHTML = pageRows.map(r => `
+                <tr class="border-b border-gray-100">
+                    <td class="py-3 px-4">${r.Concepto || r.label}</td>
+                    <td class="py-3 px-4 text-right">${Number(r.Valor || r.value).toFixed(2)}</td>
+                    <td class="py-3 px-4 text-right">${(r.Porcentaje || r.percent || 0).toString()}</td>
+                </tr>
+            `).join('');
+            results.classList.remove('hidden');
+        }
+
         function exportReportToExcel() {
             if (!reportRowsForExport.length) {
                 showNotification('Genere un reporte primero', 'warning');
                 return;
             }
-            exportRowsToExcel(reportRowsForExport, `Reporte_${currentReportLabel.replace(/\s+/g, '_')}_${toISODate(new Date())}.xlsx`, 'Reporte');
+            exportRowsToExcel(reportRowsForExport, `Reporte_${currentReportLabel.replace(/\s+/g, '_')}_${toISODate(getNowInTimeZone())}.xlsx`, 'Reporte');
         }
 
         function printReport() {
-            window.print();
+            const printArea = document.getElementById('report-print-area');
+            if (!printArea) {
+                showNotification('No hay contenido para imprimir', 'warning');
+                return;
+            }
+            // Prepare a printable window with minimal styles to avoid blank prints
+            const printWindow = window.open('', '_blank');
+            const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+                .map(el => el.outerHTML).join('\n');
+            printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${currentReportLabel}</title>${styles}</head><body>`);
+            printWindow.document.write(printArea.outerHTML);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            // Give time to render
+            setTimeout(() => {
+                printWindow.focus();
+                printWindow.print();
+                // Optionally close after printing
+                // printWindow.close();
+            }, 300);
         }
 
         // ============================================
@@ -4947,5 +5315,9 @@
             initNavigation();
         });
     </script>
+
+
+
+
 </body>
 </html>
